@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard</title>
+    <script src="{{ url_for('.static', filename='Chart.js-master/Chart.js')}}"></script>
+    <script src="{{ url_for('.static', filename='Chart.Scatter-master/Chart.Scatter.js')}}"></script>
+    <script src="http://code.jquery.com/jquery-latest.js"></script>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.5/socket.io.min.js"></script>
+
+    <script type="text/javascript" charset="utf-8">
+        $(document).ready(function(){
+            namespace = '/data'; // change to an empty string to use the global namespace
+
+            // the socket.io documentation recommends sending an explicit package upon connection
+            // this is specially important when using the global namespace
+            var socket = io.connect('http://' + document.domain + ':' + location.port + namespace);
+            var socketId;
+            var leader;
+
+            // event handler for server sent data
+            socket.on('statusData', function(data) {
+                $.each(data, function(index, value) {
+                    $("#"+index).html(value);
+                });
+            });
+
+            // event handler for new connections
+            socket.on('connect', function() {
+                console.log('Connecting to socket!');
+            });
+
+            // connected Response
+            socket.on('connected response', function(data) {
+                socketId = data.socketId
+                console.log("Connected to socket!");
+                console.log("SocketId = " + socketId);
+
+            });
+
+            // Assign Leader
+            socket.on('new leader', function(data){
+                leader = data.leader;
+                console.log("New Leader: "+leader);
+            });
+
+            // disconnected Response
+            socket.on('disconnected response', function(data) {
+                console.log("Disconnected from socket!");
+            });
+
+            // handlers for the different forms in the page
+            // these send data to the server in a variety of ways
+            $('#updateBtn').click(function() {
+                socket.emit('get arduinoStatus');
+                return false;
+            });
+
+            $('#disconnectBtn').click(function() {
+                socket.emit('disconnect request');
+                return false;
+            });
+
+        });
+    </script>
+
+
+
+</head>
+<body>
+<h1>Control Settings</h1>
+
+<button id="updateBtn">Update Data</button>
+<button id="disconnectBtn">Disconnect</button>
+
+<table>
+    <thead>
+        <tr>
+            <td>Time</td>
+            <td id="time">00/00/0000 00:00:00</td>
+        </tr>
+        <tr>
+            <th>Component</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <th>Firebox 1</th>
+        </tr>
+        <tr>
+            <td>Auger</td>
+            <td id="FB1_Ag1">Off</td>
+        </tr>
+        <tr>
+            <td>Heating Element</td>
+            <td id="FB1_HE1">Off</td>
+        </tr>
+
+        <tr>
+            <th>Firebox 2</th>
+        </tr>
+        <tr>
+            <td>Auger</td>
+            <td id="FB2_Ag1">Off</td>
+        </tr>
+        <tr>
+            <td>Heating Element</td>
+            <td id="FB2_HE1">Off</td>
+        </tr>
+        <tr>
+            <th>Cold Smoker</th>
+        </tr>
+        <tr>
+            <td>Air Pump</td>
+            <td id="CS1_AP">Off</td>
+        </tr>
+        <tr>
+            <td>Top Heating Element</td>
+            <td id="CS1_HE_top">Off</td>
+        </tr>
+        <tr>
+            <td>Bottom Heating Element</td>
+            <td id="CS1_HE_bot">Off</td>
+        </tr>
+    </tbody>
+</table>
+
+<h1>Temperatures</h1>
+<table>
+    <thead>
+        <tr>
+            <th>Thermometer</th>
+            <th>Degrees F</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>T1</td>
+            <td id="T1">0</td>
+        </tr>
+        <tr>
+            <td>T2</td>
+            <td id="T2">0</td>
+        </tr>
+        <tr>
+            <td>T3</td>
+            <td id="T3">0</td>
+        </tr>
+        <tr>
+            <td>T4</td>
+            <td id="T4">0</td>
+        </tr>
+        <tr>
+            <td>T5</td>
+            <td id="T5">0</td>
+        </tr>
+        <tr>
+            <td>T6</td>
+            <td id="T6">0</td>
+        </tr>
+        <tr>
+            <td>T7</td>
+            <td id="T7">0</td>
+        </tr>
+        <tr>
+            <td>T8</td>
+            <td id="T8">0</td>
+        </tr>
+    </tbody>
+</table>
+
+<h1>Temp History</h1>
+
+<canvas id="myChart" width="800" height="200" style="border:1px solid #000000;"></canvas>
+
+</body>
+</html>

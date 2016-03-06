@@ -20,6 +20,10 @@ from config import *
 # (message is 30 bytes long)
 ##############################
 
+class SocketTracker():
+    def __init__(self):
+        self.sockets=[]
+
 
 class ArduinoConnectionError(Exception):
     def __str__(self):
@@ -30,6 +34,7 @@ class ArduinoTools:
         self.serial_lock = threading.RLock()
         self.lastUpdate = datetime.datetime.utcnow()
         self.dataStorageDir = DATASTORAGEDIR
+        self.socketCount = 0
 
         # keep track of class objects by assigned ID
         self.id_obj_list = {}
@@ -52,8 +57,11 @@ class ArduinoTools:
             self.thermometers.append(Thermometer(50+i, self))
             self.id_obj_list[str(50+i)] = self.thermometers[i]
 
-        self.intervalReadingStopFlag = threading.Event()
-        self.intervalReadingStopFlag.set()
+        self.intervalRecordReadingStopFlag = threading.Event()
+        self.intervalRecordReadingStopFlag.set()
+
+        self.intervalSocketReadingStopFlag = threading.Event()
+        self.intervalSocketReadingStopFlag.set()
 
         self.initiateSerialConnection(port, baudrate)
 
@@ -101,9 +109,9 @@ class ArduinoTools:
         msg = chr(9)+chr(9)
         self.talk_with_arduino(msg)
 
-    def start_interval_readings(self, interval):
-        if not self.intervalReadingStopFlag.isSet():
-            print "Interval readings already running"
+    def start_interval_record_readings(self, interval):
+        if not self.intervalRecordReadingStopFlag.isSet():
+            print "Interval record readings already running"
             return 0
         print "Starting Inverval readings"
 
@@ -113,10 +121,26 @@ class ArduinoTools:
             self.updateReadings()
             self.writeCurrentDataToCSV()
 
-        self.intervalReadingStopFlag =  sample_status(self) #Return stop flag
+        self.intervalRecordReadingStopFlag =  sample_status(self) #Return stop flag
 
-    def stop_interval_readings(self):
-        self.intervalReadingStopFlag.set()
+    def stop_interval_record_readings(self):
+        self.intervalRecordReadingStopFlag.set()
+
+    def start_socket_interval_readings(self, interval):
+        if not self.intervalSocketReadingStopFlag.isSet():
+            print "Interval readings already running"
+            return 0
+        print "Starting Inverval readings"
+
+        @timedLoopCall(interval)
+        def sample_status(self):
+            print time.ctime(), "\t",
+            self.updateReadings()
+
+        self.intervalSocketReadingStopFlag =  sample_status(self) #Return stop flag
+
+    def stop_socket_interval_readings(self):
+        self.intervalSocketReadingStopFlag.set()
 
     def writeCurrentDataToCSV(self):
         data = [self.lastUpdate.strftime("%Y-%m-%d %H:%M:%S"),

@@ -8,7 +8,7 @@ def timedLoopCall(interval):
 
             def loop(): # executed in another thread
                 function(*args, **kwargs)
-                while not stopped.wait(interval): # until stopped
+                while not stopped.wait(interval): # until stopped; interval in seconds
                     threading.Thread(target=function, args=args, kwargs=kwargs).start()
 
             t = threading.Thread(target=loop)
